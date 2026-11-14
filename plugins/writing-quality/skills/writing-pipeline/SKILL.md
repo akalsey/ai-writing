@@ -25,11 +25,11 @@ The cold-reader and clarity passes add words. They define terms and unpack compr
 
 ### Step 1 — length cut
 
-Apply `concise`. Name the reader and what they asked, put the answer in the first sentence, and cut every sentence the reader wouldn't miss. Cut whole sentences; don't compress the ones that stay. Note the word count when you're done.
+Apply `concise`. Name the reader and what they asked, put the answer in the first sentence, and cut every sentence the reader wouldn't miss. Cut whole sentences; don't compress the ones that stay. Work on the draft as it stands: don't rewrite it short and call that the cut. Record the word count before and after, and the ceiling `concise` gives for this document type. If the result is over the ceiling, cut again before moving on. Later steps measure against this number, so the step isn't done until it's written down.
 
 ### Step 2 — cold-reader audit
 
-Apply `cold-reader-docs`. Re-read the whole document as someone with no knowledge of the conversation that produced it and only general awareness of the topic. Fix every term used before it's introduced, every pointer that resolves outside the document, every conclusion presented as "what we discussed."
+Apply `cold-reader-docs`. Re-read the whole document as someone with no knowledge of the conversation that produced it and only general awareness of the topic. Fix every term used before it's introduced, every pointer that resolves outside the document, every conclusion presented as "what we discussed." Define only what this reader wouldn't know. An engineering team reading an engineering update knows ALB, N+1, and OOM; defining them for that reader is padding.
 
 ### Step 3 — clarity pass
 
@@ -50,7 +50,7 @@ Two of its rules would undo the clarity pass, so they don't apply to what steps 
 
 Read the finished document start to finish, in order, as prose rather than as a checklist target. This catches the failure the first four steps create: an edit that fixed a flagged span and broke the paragraph around it, a definition inserted where it interrupts the argument, a transition that stopped connecting once the sentence before it changed.
 
-Compare the length with the count from step 1. If the document has grown by more than the definitions and rewordings the later passes needed, one of them brought back material the cut removed. Find it and take it out again.
+Compare the length with the count from step 1. If the document has grown by more than the definitions and rewordings the later passes needed, or is now over the ceiling, one of them brought back material the cut removed. Find it and take it out again. Report both counts with what you changed.
 
 ## What done looks like
 

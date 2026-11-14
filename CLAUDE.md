@@ -58,7 +58,8 @@ Adding or editing a skill is a shipped change: bump the plugin version in the sa
 make                    # package every changed skill into dist/
 make clear-prose        # package one skill by name
 make validate           # skills against the spec + marketplace against disk
-make test               # hook tests
+make flat               # flat zips (SKILL.md at the root) for Grok, into dist/flat/
+make test               # hook and build tests
 make list               # each skill with its plugin
 make clean              # remove dist/
 ./build.py version      # plugin versions; --expect X asserts they all match
@@ -66,7 +67,11 @@ make clean              # remove dist/
 
 `build.py` is the implementation; the Makefile adds change detection and generates one rule per skill directory. Call `build.py` directly for anything the Makefile doesn't cover (`./build.py package --out /some/dir`).
 
-A `.skill` file is a zip whose single top-level entry is the skill directory — the format [`package_skill.py`](https://github.com/anthropics/skills) produces, accepted by claude.ai skill uploads (Settings → Capabilities → Skills) and the Skills API. Builds are deterministic: fixed zip timestamps and sorted entries, so an unchanged skill rebuilds byte-identical. Override the timestamp with `SOURCE_DATE_EPOCH`.
+A `.skill` file is a zip whose single top-level entry is the skill directory — the format [`package_skill.py`](https://github.com/anthropics/skills) produces, accepted by claude.ai skill uploads (Settings → Capabilities → Skills) and the Skills API. `make flat` (`build.py package --format flat`) builds a second format: `dist/flat/<skill>.zip` with `SKILL.md` at the archive root rather than inside a skill directory. That's the layout Grok's skill upload expects, per third-party guides; it hasn't been confirmed against xAI documentation, so if a Grok upload fails, check the layout first. Releases attach both formats.
+
+Skill text has to stay tool-neutral so the same files work in Grok and other Agent Skills clients: no Claude Code tool names ("the Edit tool"), no slash commands, no hook references in the instructions themselves.
+
+Builds are deterministic: fixed zip timestamps and sorted entries, so an unchanged skill rebuilds byte-identical. Override the timestamp with `SOURCE_DATE_EPOCH`.
 
 `make validate` also cross-checks `marketplace.json` against disk: every listed plugin must have a `plugin.json` whose `name` and `version` agree with the catalog entry, and a plugin on disk that isn't listed warns.
 
@@ -145,13 +150,17 @@ Output styles are a Claude Code feature, so this file never goes into a `.skill`
 
 `concise` exists because the cold-reader and clarity passes only add. In testing, the pipeline without it grew a Slack reply to "is there an ETA?" from 141 words to 203. The word count after the cut is a budget the re-read step checks against. If you change either expanding pass, re-run a context-heavy drafting task (a short reply written after a long working session) and confirm the final isn't longer than the cut version. `concise` cuts content, never grammar: compressing survivors into fragments is a machine tell that `avoid-ai-writing` flags, so the two must not fight.
 
+Two limits on `concise` came from the author, not from testing, and both are deliberate. It never removes a request: "fewer requests" in *Writing for Busy Readers* means merging duplicates and making implicit asks explicit, not choosing which of the author's questions survive. And it never adds formatting to a draft that has none, because the skill can't know where the text will be pasted; it may add a little Markdown only when the draft is already Markdown.
+
 `clear-prose` and `cold-reader-docs` share a boundary. Labels the writer coined while doing the work ("the clone," "the knobs") belong to `cold-reader-docs`; `clear-prose` handles names that are wrong for the reader even when nothing was coined (inflated category nouns, invented compounds, verbs with a budget). `clear-prose` defers to the cold-reader pass for coinages, so keep that pointer if either file moves.
 
 ## Testing changes to `concise`
 
 `plugins/writing-quality/skills/concise/test-corpus.md`: Part 1 should come back substantially shorter without losing an action, date, owner, or decision. Part 2 should come back essentially unchanged. Part 2's traps are the over-cut failures: compressing an already-short reply, stripping necessary detail from an incident write-up, dropping verification a reviewer needs, removing a needed definition, and treating one courtesy as padding.
 
-The skill's job only shows up when the writer knows more than the reader needs, so the corpus alone isn't enough. Editing someone else's bloated draft passed even before this skill existed. Also test drafting after a long working session, where the failure actually happens.
+The skill's job only shows up when the writer knows more than the reader needs, so the corpus alone isn't enough.
+
+The length ceilings in step 5 behave like targets: in testing, every run landed within a few words of whatever ceiling was set. With a 150-word ceiling, team status updates came out at 153–163 words. At 100, they came out at 100–104. So set a ceiling at the length you want, not at a generous upper bound, and re-run a status update written after a long debugging session whenever you change one. Before the ceilings existed, `concise` had nothing to measure a request with no stated length against, and the same reports came out at 244–298 words. Editing someone else's bloated draft passed even before this skill existed. Also test drafting after a long working session, where the failure actually happens.
 
 ## Testing changes to `clear-prose`
 

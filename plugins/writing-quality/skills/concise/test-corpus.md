@@ -78,6 +78,19 @@ Each passage says who it's for and what prompted it, because length can only be 
 > ## Notes
 > Let me know if you have other questions about the cluster setup.
 
+**11.** Plain-text email from Wen to Dario, who runs the design team. Sent as plain text.
+
+> Hi Dario,
+>
+> I hope things are good on your end. We're finalizing the onboarding flow and I wanted to loop you in. Could your team review the new welcome screens sometime soon? The mockups are in the shared Figma file under "Onboarding v4." I'm also not sure the illustrations we're using are licensed for commercial use. We're aiming to start building on the 22nd, so it would be good to have feedback before then. Anyway, if your team could take a look at the welcome screens, that would be really helpful.
+>
+> Thanks so much,
+> Wen
+
+**14.** Status update for the search team, after a day spent on a bug. The request was "write a status update for the team."
+
+> Search results for multi-word queries in the mobile app have been returning empty for about 4% of queries since Monday's release. I tracked it down this afternoon. The tokenizer change in Monday's release started splitting hyphenated words into separate tokens, so "e-bike" became "e" and "bike," and the single-letter token "e" matched the stopword filter, which then discarded the whole phrase query instead of just the stopword. I fixed the stopword filter so it drops only the stopword token. While I was in there, my first version of the fix broke exact-phrase matching for quoted queries, which I caught with the existing phrase tests and fixed before pushing. I also added 6 new test cases covering hyphenated terms, quoted phrases, and mixed queries. All 1,204 tests pass. I replayed 10,000 queries from Tuesday's logs through the old and new code: empty-result rate went from 4.1% to 0.3%, and p95 latency was unchanged at 182 ms. The remaining 0.3% are genuinely empty queries, which matches the rate before Monday. The PR is #2210, and Priya is reviewing it. If it's approved today, it ships in tomorrow's 10am release. I haven't looked at whether the web app has the same issue; it uses a different tokenizer config, so it may not, but someone should check.
+
 ### Expected results
 
 | Passage | Should keep | Should cut |
@@ -87,12 +100,14 @@ Each passage says who it's for and what prompted it, because length can only be 
 | 3 | problem, repro, expected/actual; "cause not known yet" | Summary, Background, the list of possible causes, Impact, Next steps |
 | 4 | badge required at all hours from March 3; pick one up at the front desk | the purpose statement, the review backstory, the summary, the stacked thanks |
 | 5 | us-east-2 | the headers and bullets; the provisioning date and the old cluster unless asked |
+| 14 | what broke (empty results on hyphenated queries since Monday), the fix, the one before-and-after figure (4.1% to 0.3% empty results), PR #2210 with Priya reviewing, ships tomorrow 10am if approved, the open web-app question with an owner or `[author: …]`; 100 words or fewer | the tokenizer mechanics beyond one clause, the self-introduced phrase-matching bug, test counts, the latency figure, the explanation of the remaining 0.3% |
+| 11 | both asks: the review of the welcome screens, and the licensing question turned into a direct question; the Figma location; feedback needed before the 22nd, next to the ask; plain text, no added formatting | the pleasantry, the "loop you in" setup, the repeated review request |
 
-Cutting must never drop an action, a date, an owner, or a decision. A result that loses "comments in the doc," "March 3," or "front desk" is a failure even if it's shorter.
+Cutting must never drop an action, a date, an owner, a decision, or a request. A result that loses "comments in the doc," "March 3," or "front desk" is a failure even if it's shorter.
 
 ## Part 2 — should not be cut
 
-Nothing below should lose more than a word or two. Each passage is already the length its reader needs.
+Nothing below should lose more than a word or two, and nothing should gain formatting. Each passage is already the length its reader needs.
 
 **6.** Reply to the email in passage 1.
 
@@ -116,6 +131,14 @@ Nothing below should lose more than a word or two. Each passage is already the l
 
 > Sure, I'll take it. Thanks for asking early.
 
+**12.** Plain-text message to the finance team from a new hire setting up expenses.
+
+> A few questions before I file my first expense report: 1) Is there a per-diem for meals, or do I submit receipts? 2) Can I book flights myself, or do they go through the travel desk? 3) What's the approval limit before I need a director's sign-off? 4) Are rideshares reimbursable, or only taxis? 5) How long do I have to submit after a trip? 6) Does the company card cover hotel incidentals? 7) Who do I ask if a receipt is lost? Thanks!
+
+**13.** Plain-text email to everyone in the building. Sent as plain text.
+
+> The east parking lot will be closed for repaving from June 2 through June 6. During those days, park in the west lot or the overflow lot on Birch Street; the shuttle from Birch Street runs every ten minutes from 7am to 7pm. Accessible spaces in the west lot are reserved for anyone with a permit. If your car is in the east lot after 8pm on June 1, it will be towed at your expense. Questions to facilities@.
+
 ### False-positive traps in Part 2
 
 - An already-short reply (6). Compressing it further into "Yes, Wed." is a failure.
@@ -123,3 +146,5 @@ Nothing below should lose more than a word or two. Each passage is already the l
 - Verification detail kept because the reader is a reviewer (8).
 - A definition the reader needs, in a short issue (9).
 - One friendly line in a short reply (10). One courtesy isn't padding.
+- Seven distinct questions (12). Every one stays; consolidating means merging duplicates, not choosing which questions the author gets to ask.
+- Plain text with dates, places, and a deadline (13). It must not gain headings, bold, or bullets: the draft has no formatting, and nothing says where it will be pasted.

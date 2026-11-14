@@ -11,7 +11,7 @@ Five skills, a hook, and an output style.
 | Skill | What it does |
 |---|---|
 | `writing-pipeline` | The entry point. Runs the four checks below in order, then a full re-read, and defines when a document is done. |
-| `concise` | Cuts a draft to what its reader needs. Puts the answer first, then removes whole sentences and sections the reader wouldn't miss: restated requests, background they already have, the writer's process, rejected alternatives, recaps. It cuts content, never grammar, and never drops an action, date, owner, or decision. |
+| `concise` | Cuts a draft to what its reader needs. Puts the answer first, then removes whole sentences and sections the reader wouldn't miss: restated requests, background they already have, the writer's process, rejected alternatives, recaps. It also makes every request easy to answer: duplicates merged, implicit asks turned into questions, deadlines next to the ask. It cuts content, never grammar; it never drops an action, date, owner, decision, or request; and it never adds formatting to a draft that has none. |
 | `cold-reader-docs` | Makes a document stand on its own for someone who wasn't in the conversation that produced it. Catches terms used before they're defined, pointers like "the approach we discussed," and shorthand the writer coined while working. |
 | `clear-prose` | Sentence-level clarity. Checks that the actor is the subject and the action is the verb, that things are called what the reader would call them, and that each paragraph leads with its point. |
 | `avoid-ai-writing` | Finds and removes AI writing patterns: tiered vocabulary, formatting habits, and the structural tics that survive a vocabulary cleanup. Has `detect`, `rewrite`, and `edit` modes, context profiles (blog, docs, internal memo, LinkedIn, and others), and optional voice profiles. |
@@ -47,9 +47,25 @@ export AI_WRITING_PIPELINE_HOOK=0
 
 The skills trigger on their own when a task matches ("make this clearer," "remove the AI-isms," "turn this into a doc"). You can also invoke them directly, for example `/writing-quality:avoid-ai-writing detect` on a draft.
 
+### Grok
+
+Grok reads the same skill format. Build the flat zips, which put `SKILL.md` at the root of each archive, or download them from a tagged release once one is published:
+
+```sh
+make flat    # writes dist/flat/<skill>.zip
+```
+
+Upload each zip at **Settings → Skills**. Install all five: `writing-pipeline` calls the other four by name and can't run them if they're missing.
+
+Grok has no hook, so nothing runs the pipeline automatically. To get the same effect, add this to your custom instructions:
+
+> When you draft an email, message, issue, memo, or document for me, apply the writing-pipeline skill to it before showing it to me.
+
+The rules were tuned and tested against Claude. Grok may flag or cut differently; the corpora in each skill directory are the way to check.
+
 ### claude.ai and the Skills API
 
-Each skill is also packaged as a standalone `.skill` file, which you can upload at **claude.ai → Settings → Capabilities → Skills** or pass to the Skills API. Download them from a tagged release once one is published, or build them yourself (see below). The hook and the output style are Claude Code features and aren't part of the `.skill` bundles.
+Each skill is also packaged as a standalone `.skill` file, which you can upload at **claude.ai → Settings → Capabilities → Skills** or pass to the Skills API. Download them from a tagged release once one is published, or build them yourself (see below). The hook and the output style are Claude Code features and aren't part of any bundle.
 
 ## Building and testing
 
@@ -68,8 +84,9 @@ make validate test PYTHON=.venv/bin/python
 ```sh
 make              # package every changed skill into dist/
 make clear-prose  # package one skill by name
+make flat         # package every skill as a flat zip for Grok, into dist/flat/
 make validate     # check skill frontmatter, and that marketplace.json matches each plugin.json
-make test         # run the hook tests
+make test         # run the hook and build tests
 make list         # list each skill with its plugin
 ```
 
@@ -89,6 +106,8 @@ New rules need a Part 1 passage and an expected-flags row in the corpus, and the
 ## Credits
 
 `avoid-ai-writing` draws on Wikipedia's [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing), Simon Willison's [LLM cliché highlighter](https://tools.simonwillison.net/llm-cliche-highlighter), and ideas from [blader/humanizer](https://github.com/blader/humanizer), [Aboudjem/humanizer-skill](https://github.com/Aboudjem/humanizer-skill), and [brandonwise/humanizer](https://github.com/brandonwise/humanizer). The rules are written fresh for this project; each one that started from another project's idea credits it where it appears.
+
+`concise` follows Todd Rogers and Jessica Lasky-Fink's [*Writing for Busy Readers*](https://writingforbusyreaders.com/), whose principles come from field experiments on real messages.
 
 `clear-prose` is built on Joseph M. Williams and Joseph Bizup's *Style: The Basics of Clarity and Grace*. It also draws on Zonder Labs' [Why is AI Slop so Frustrating to Read?](https://zonderlabs.com/slop), which found that clarity faults, not vocabulary, are what make AI writing hard to read.
 

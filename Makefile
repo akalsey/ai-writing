@@ -4,7 +4,8 @@
 #   make clear-prose              package one skill by name
 #   make dist/clear-prose.skill   same thing, by path
 #   make validate                 check skills + marketplace wiring
-#   make test                     run the hook tests
+#   make flat                     package every skill as a flat zip, for Grok
+#   make test                     run the tests
 #   make list                     show skills and the plugin each belongs to
 #   make clean                    remove dist/
 #
@@ -23,7 +24,7 @@ BUNDLES     := $(addprefix dist/,$(addsuffix .skill,$(SKILL_NAMES)))
 # uv, fall back to python3; the README lists what to pip install for that.
 PYTHON := $(if $(shell command -v uv),uv run --quiet --script,python3)
 
-.PHONY: all validate test list clean $(SKILL_NAMES)
+.PHONY: all flat validate test list clean $(SKILL_NAMES)
 .DEFAULT_GOAL := all
 
 all: $(BUNDLES)
@@ -42,8 +43,11 @@ $(foreach d,$(SKILL_DIRS),$(eval $(call SKILL_RULE,$(d))))
 validate:
 	@$(PYTHON) build.py validate
 
+flat:
+	@$(PYTHON) build.py package --format flat --out dist/flat
+
 test:
-	@$(PYTHON) tests/test_prose_check.py
+	@for t in tests/test_*.py; do $(PYTHON) $$t || exit 1; done
 
 list:
 	@$(PYTHON) build.py list

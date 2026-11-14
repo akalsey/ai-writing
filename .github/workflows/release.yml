@@ -59,10 +59,15 @@ jobs:
           echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
           make clean
           make
+          make flat
 
       - name: Generate checksums
         working-directory: dist
-        run: sha256sum *.skill > SHA256SUMS
+        # Names match the release assets: flat zips upload without their
+        # flat/ prefix, so hash them from inside that directory.
+        run: |
+          sha256sum *.skill > SHA256SUMS
+          (cd flat && sha256sum *.zip) >> SHA256SUMS
 
       - name: Write release notes
         run: |
@@ -71,6 +76,10 @@ jobs:
             echo
             echo "Upload a \`.skill\` file at **claude.ai → Settings → Capabilities → Skills**,"
             echo "or pass it to the Skills API."
+            echo
+            echo "For Grok, upload the \`.zip\` with the same name at **Settings → Skills**. Each one"
+            echo "has \`SKILL.md\` at the root of the archive. Install all five; \`writing-pipeline\`"
+            echo "calls the other four by name."
             echo
             echo "Claude Code users don't need these files:"
             echo
@@ -102,4 +111,4 @@ jobs:
           gh release create "${{ steps.v.outputs.tag }}" \
             --title "${{ steps.v.outputs.tag }}" \
             --notes-file notes.md \
-            dist/*.skill dist/SHA256SUMS
+            dist/*.skill dist/flat/*.zip dist/SHA256SUMS

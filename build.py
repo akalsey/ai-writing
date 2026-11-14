@@ -212,21 +212,28 @@ def should_exclude(rel: Path) -> bool:
     return any(fnmatch.fnmatch(rel.name, pat) for pat in EXCLUDE_GLOBS)
 
 
-def package_skill(skill: Path, out_dir: Path) -> Path:
+def package_skill(skill: Path, out_dir: Path, fmt: str = "skill") -> Path:
+    """Zip one skill.
+
+    "skill" is the claude.ai and Skills API format: <name>.skill with the skill
+    directory as the single top-level entry. "flat" is <name>.zip with SKILL.md
+    at the archive root, the layout tools like Grok expect for a skill upload.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
-    target = out_dir / f"{skill.name}.skill"
+    target = out_dir / (f"{skill.name}.zip" if fmt == "flat" else f"{skill.name}.skill")
     date = zip_date()
 
     members = []
     for path in sorted(skill.rglob("*")):
         if not path.is_file():
             continue
-        arcname = path.relative_to(skill.parent)
-        if should_exclude(arcname):
+        rel = path.relative_to(skill.parent)
+        if should_exclude(rel):
             continue
+        arcname = path.relative_to(skill) if fmt == "flat" else rel
         members.append((path, arcname))
 
-    tmp = target.with_suffix(".skill.tmp")
+    tmp = target.with_name(target.name + ".tmp")
     try:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zf:
             for path, arcname in members:
@@ -424,7 +431,7 @@ def cmd_package(args: argparse.Namespace) -> int:
         for warning in warnings:
             print(f"warning: {skill.name}: {warning}", file=sys.stderr)
         print(f"packaging {skill.name}")
-        package_skill(skill, out_dir)
+        package_skill(skill, out_dir, args.format)
 
     if failed:
         print(
@@ -439,10 +446,13 @@ def cmd_clean(args: argparse.Namespace) -> int:
     if not DIST_DIR.exists():
         return 0
     removed = 0
-    for pattern in ("*.skill", "*.tmp", "SHA256SUMS"):
+    for pattern in ("*.skill", "*.tmp", "SHA256SUMS", "flat/*.zip", "flat/*.tmp"):
         for path in sorted(DIST_DIR.glob(pattern)):
             path.unlink()
             removed += 1
+    flat = DIST_DIR / "flat"
+    if flat.is_dir() and not any(flat.iterdir()):
+        flat.rmdir()
     if not any(DIST_DIR.iterdir()):
         DIST_DIR.rmdir()
     print(f"removed {removed} file(s)")
@@ -466,6 +476,13 @@ def main() -> int:
     p_package = sub.add_parser("package", help="build .skill files")
     p_package.add_argument("skills", nargs="*", help="skill names (default: all)")
     p_package.add_argument("--out", help=f"output directory (default: {DIST_DIR.name}/)")
+    p_package.add_argument(
+        "--format",
+        choices=["skill", "flat"],
+        default="skill",
+        help="skill: <name>.skill for claude.ai and the Skills API (default); "
+        "flat: <name>.zip with SKILL.md at the root, for Grok and similar uploads",
+    )
     p_package.set_defaults(func=cmd_package)
 
     p_version = sub.add_parser("version", help="show or assert plugin versions")
