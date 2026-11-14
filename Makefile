@@ -19,6 +19,10 @@ SKILL_DIRS  := $(patsubst %/SKILL.md,%,$(wildcard plugins/*/skills/*/SKILL.md))
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 BUNDLES     := $(addprefix dist/,$(addsuffix .skill,$(SKILL_NAMES)))
 
+# The scripts declare their dependencies inline (PEP 723), which uv reads. Without
+# uv, fall back to python3; the README lists what to pip install for that.
+PYTHON := $(if $(shell command -v uv),uv run --quiet --script,python3)
+
 .PHONY: all validate test list clean $(SKILL_NAMES)
 .DEFAULT_GOAL := all
 
@@ -28,7 +32,7 @@ all: $(BUNDLES)
 # $(1) is the skill directory; $(notdir $(1)) is the skill name.
 define SKILL_RULE
 dist/$(notdir $(1)).skill: $(shell find $(1) -type f -not -name '.DS_Store') build.py
-	@./build.py package $(notdir $(1))
+	@$(PYTHON) build.py package $(notdir $(1))
 
 $(notdir $(1)): dist/$(notdir $(1)).skill
 endef
@@ -36,13 +40,13 @@ endef
 $(foreach d,$(SKILL_DIRS),$(eval $(call SKILL_RULE,$(d))))
 
 validate:
-	@./build.py validate
+	@$(PYTHON) build.py validate
 
 test:
-	@uv run --quiet --script tests/test_prose_check.py
+	@$(PYTHON) tests/test_prose_check.py
 
 list:
-	@./build.py list
+	@$(PYTHON) build.py list
 
 clean:
-	@./build.py clean
+	@$(PYTHON) build.py clean

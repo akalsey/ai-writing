@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import uuid
@@ -20,12 +21,14 @@ from pathlib import Path
 
 import pytest
 
-HOOK = Path(__file__).resolve().parent.parent / "plugins/writing-quality/hooks/prose_check.py"
+HOOKS = Path(__file__).resolve().parent.parent / "plugins/writing-quality/hooks"
+LAUNCHER = HOOKS / "run.sh"
 
 
 def run_hook(payload: dict, env: dict | None = None) -> str:
+    """Run the hook the way hooks.json does: `sh run.sh`, payload on stdin."""
     result = subprocess.run(
-        ["uv", "run", "--quiet", "--script", str(HOOK)],
+        ["/bin/sh", str(LAUNCHER)],
         input=json.dumps(payload),
         capture_output=True,
         text=True,
@@ -34,6 +37,15 @@ def run_hook(payload: dict, env: dict | None = None) -> str:
     )
     assert result.returncode == 0, result.stderr
     return result.stdout
+
+
+def path_with(tmp_path: Path, **links: str) -> str:
+    """A PATH holding only the named executables, symlinked from real ones."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    for name, target in links.items():
+        (bin_dir / name).symlink_to(target)
+    return str(bin_dir)
 
 
 def context_of(stdout: str) -> str:
@@ -124,6 +136,45 @@ def test_pr_create_with_body_reminds(command: str) -> None:
 )
 def test_other_bash_is_silent(command: str) -> None:
     assert run_hook(bash(command)) == ""
+
+
+# --- launcher -----------------------------------------------------------------
+
+
+def test_hooks_json_runs_the_launcher_through_sh() -> None:
+    config = json.loads((HOOKS / "hooks.json").read_text())
+    commands = {h["command"] for entry in config["hooks"]["PostToolUse"] for h in entry["hooks"]}
+    assert commands == {'sh "${CLAUDE_PLUGIN_ROOT}/hooks/run.sh"'}
+
+
+def test_launcher_works_with_python3_and_no_uv(memo: Path, tmp_path: Path) -> None:
+    env = {"PATH": path_with(tmp_path, python3=sys.executable)}
+    out = run_hook({"session_id": session(), "tool_name": "Write", "tool_input": {"file_path": str(memo)}}, env)
+    assert "writing-pipeline" in context_of(out)
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="uv not installed")
+def test_launcher_falls_back_to_uv_without_python3(memo: Path, tmp_path: Path) -> None:
+    env = {"PATH": path_with(tmp_path, uv=shutil.which("uv"))}
+    out = run_hook({"session_id": session(), "tool_name": "Write", "tool_input": {"file_path": str(memo)}}, env)
+    assert "writing-pipeline" in context_of(out)
+
+
+def test_launcher_skips_a_python3_that_cannot_run(memo: Path, tmp_path: Path) -> None:
+    # macOS without the command line tools ships a /usr/bin/python3 stub that
+    # exists on PATH but fails when run. The launcher must not pass that on.
+    stub = tmp_path / "python3-stub"
+    stub.write_text("#!/bin/sh\nexit 1\n")
+    stub.chmod(0o755)
+    env = {"PATH": path_with(tmp_path, python3=str(stub))}
+    out = run_hook({"session_id": session(), "tool_name": "Write", "tool_input": {"file_path": str(memo)}}, env)
+    assert out == ""
+
+
+def test_launcher_is_silent_with_no_interpreter(memo: Path, tmp_path: Path) -> None:
+    env = {"PATH": path_with(tmp_path)}
+    out = run_hook({"session_id": session(), "tool_name": "Write", "tool_input": {"file_path": str(memo)}}, env)
+    assert out == ""
 
 
 def test_pr_reminder_respects_disable_switch() -> None:

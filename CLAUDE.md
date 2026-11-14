@@ -15,6 +15,7 @@ plugins/
   writing-quality/                  # always-run checks
     .claude-plugin/plugin.json
     hooks/hooks.json                # PostToolUse -> prose_check.py
+    hooks/run.sh                    # launcher: python3, else uv, else silent
     hooks/prose_check.py
     output-styles/clear-reports.md  # opt-in; Claude Code only
     skills/avoid-ai-writing/        # SKILL.md + test-corpus.md
@@ -117,6 +118,8 @@ The `description` is the dispatch surface — it decides whether a skill fires, 
 `writing-quality` bundles a `PostToolUse` hook on `Write|Edit|MultiEdit|NotebookEdit` and on `Bash`. It emits `additionalContext` reminding Claude to run `writing-pipeline`. The skill documents the procedure; the hook is what makes it happen on documents nobody thought to check.
 
 For file writes, it fires only on prose-looking files, once per file per session, and only above 600 bytes. For `Bash`, it fires only when a command runs `gh pr create` with `--body`, `-b`, `--body-file`, or `-F`. A bare `--fill` copies commit messages and is skipped. So is `gh pr edit`, because that's how Claude applies the fix, and reminding on the fix would loop. The PR reminder fires after the PR exists, since a PostToolUse hook can't see the body before it's sent; the reminder tells Claude to update the body with `gh pr edit`. Those filters exist because a hook that nags on every source file gets turned off, which is worse than no hook. It never blocks a write, and any unexpected failure exits 0 silently — breaking someone's edit is a worse outcome than missing a reminder. `AI_WRITING_PIPELINE_HOOK=0` disables it.
+
+`hooks.json` runs `sh hooks/run.sh`, not the Python script. The script is stdlib-only and runs on Python 3.8+, so the launcher uses `python3` when it's on `PATH` and falls back to `uv run` only when it isn't. Most people installing a plugin don't have uv, and a hook that needs it would error after every write for them. With neither interpreter, the launcher exits 0 and says nothing. Keep the script stdlib-only and 3.8-compatible; a dependency would break the `python3` path.
 
 Test it by piping a payload to the script directly rather than by triggering real writes:
 
