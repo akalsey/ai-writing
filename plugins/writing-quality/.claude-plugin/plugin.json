@@ -1,6 +1,6 @@
 {
   "name": "writing-quality",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "The checks to run on every document: make sure a reader who wasn't in the conversation can follow it, that each sentence says who did what in words the reader would use, and that the prose carries no machine tells. Includes a hook that reminds Claude to run them after writing prose or opening a pull request, and an opt-in output style that applies the clarity rules to Claude's own status reports.",
   "author": {
     "name": "Adam Kalsey",

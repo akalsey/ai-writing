@@ -139,6 +139,204 @@ def test_other_bash_is_silent(command: str) -> None:
     assert run_hook(bash(command)) == ""
 
 
+# --- document and page tools -----------------------------------------------
+
+PROSE = (
+    "The export failed for large accounts because the view built the whole file in memory. "
+    "Accounts above ten thousand rows hit the load balancer's timeout and got an error. "
+    "The export now streams rows as it reads them, so the first byte arrives quickly. "
+    "A fifty-thousand-row export finishes in thirteen seconds instead of timing out. "
+    "Nothing changed for small accounts, and scheduled reports still work as before. "
+    "One question is still open: the largest export was slower per row than expected. "
+    "Someone should check it against the staging database before the release goes out. "
+    "The pull request is waiting on review, and it ships with the next deploy once approved. "
+)
+
+
+def docs_update(sid: str, doc: str, node: str, text: str) -> dict:
+    """Shaped like the Claude Docs connector's update call."""
+    return {
+        "session_id": sid,
+        "tool_name": "mcp__claude_ai_Claude_Docs__update",
+        "tool_input": {
+            "container": {"kind": "project", "id": doc},
+            "ref": {"object": "node", "id": node},
+            "payload": {"ops": [{"op": "replace", "with": {"from": {"content": text}}}]},
+        },
+    }
+
+
+def test_document_tool_writing_prose_reminds() -> None:
+    text = context_of(run_hook(docs_update(session(), "doc-1", "n1", PROSE)))
+    assert "writing-pipeline" in text
+    assert "concise" in text
+
+
+def test_any_connector_write_with_prose_reminds() -> None:
+    payload = {
+        "session_id": session(),
+        "tool_name": "mcp__notion__create_page",
+        "tool_input": {"parent": {"page_id": "p1"}, "title": "Status", "body": PROSE},
+    }
+    assert "writing-pipeline" in context_of(run_hook(payload))
+
+
+def test_document_tool_reminds_once_per_document() -> None:
+    sid = session()
+    assert run_hook(docs_update(sid, "doc-1", "n1", PROSE))
+    assert run_hook(docs_update(sid, "doc-1", "n2", PROSE)) == ""
+    assert run_hook(docs_update(sid, "doc-2", "n1", PROSE))
+
+
+@pytest.mark.parametrize(
+    "tool_input",
+    [
+        {"container": {"id": "d"}, "payload": {"content": "A short note."}},
+        {"container": {"id": "d"}, "payload": {"content": "def f(x):\n    return {x: [1, 2, 3]}\n" * 40}},
+        {"container": {"id": "d"}, "payload": {"rows": [{"id": i, "status": "ok"} for i in range(200)]}},
+    ],
+)
+def test_document_tool_without_prose_is_silent(tool_input: dict) -> None:
+    payload = {"session_id": session(), "tool_name": "mcp__claude_ai_Claude_Docs__update", "tool_input": tool_input}
+    assert run_hook(payload) == ""
+
+
+def test_read_only_connector_tool_is_silent() -> None:
+    payload = {"session_id": session(), "tool_name": "mcp__claude_ai_Slack__slack_search_public", "tool_input": {"query": PROSE}}
+    assert run_hook(payload) == ""
+
+
+def test_artifact_publishing_markdown_reminds(tmp_path: Path) -> None:
+    page = tmp_path / "report.md"
+    page.write_text(PROSE)
+    payload = {"session_id": session(), "tool_name": "Artifact", "tool_input": {"file_path": str(page)}}
+    assert "writing-pipeline" in context_of(run_hook(payload))
+
+
+def test_artifact_publishing_a_prose_page_reminds(tmp_path: Path) -> None:
+    page = tmp_path / "report.html"
+    page.write_text(f"<html><head><style>p {{color: red}}</style></head><body><h1>Status</h1><p>{PROSE}</p></body></html>")
+    payload = {"session_id": session(), "tool_name": "Artifact", "tool_input": {"file_path": str(page)}}
+    assert "writing-pipeline" in context_of(run_hook(payload))
+
+
+def test_artifact_publishing_an_app_is_silent(tmp_path: Path) -> None:
+    page = tmp_path / "dashboard.html"
+    script = "const data = [1, 2, 3]; function render() { return data.map(x => x * 2); }\n" * 60
+    page.write_text(f"<html><body><h1>Dashboard</h1><div id=app></div><script>{script}</script></body></html>")
+    payload = {"session_id": session(), "tool_name": "Artifact", "tool_input": {"file_path": str(page)}}
+    assert run_hook(payload) == ""
+
+
+def test_artifact_read_is_silent(tmp_path: Path) -> None:
+    page = tmp_path / "report.md"
+    page.write_text(PROSE)
+    payload = {"session_id": session(), "tool_name": "Artifact", "tool_input": {"action": "read", "file_path": str(page)}}
+    assert run_hook(payload) == ""
+
+
+def test_document_reminder_respects_disable_switch() -> None:
+    out = run_hook(docs_update(session(), "doc-1", "n1", PROSE), env={"AI_WRITING_PIPELINE_HOOK": "0"})
+    assert out == ""
+
+
+def test_hooks_json_watches_artifact_and_connector_writes() -> None:
+    import re
+
+    config = json.loads((HOOKS / "hooks.json").read_text())
+    matchers = [entry["matcher"] for entry in config["hooks"]["PostToolUse"]]
+
+    def matched(tool: str) -> bool:
+        return any(re.fullmatch(m, tool) for m in matchers)
+
+    assert matched("Artifact")
+    assert matched("mcp__claude_ai_Claude_Docs__update")
+    assert matched("mcp__claude_ai_Claude_Docs__batch")
+    assert matched("mcp__notion__create_page")
+    assert not matched("mcp__claude_ai_Slack__slack_search_public")
+    assert not matched("mcp__claude_ai_Granola__get_meetings")
+
+
+@pytest.mark.parametrize(
+    "tool",
+    [
+        "mcp__claude_ai_Slack__slack_send_message",  # already sent; a rewrite would mean re-sending
+        "mcp__claude_ai_Gmail__reply",
+        "mcp__claude_ai_Support_MCP__desk_reply",
+        "mcp__github__add_comment",
+        "mcp__claude_ai_Gmail__get_draft",  # reads that contain a write verb
+        "mcp__claude_ai_Gmail__list_drafts",
+    ],
+)
+def test_sending_and_reading_tools_are_silent(tool: str) -> None:
+    payload = {"session_id": session(), "tool_name": tool, "tool_input": {"body": PROSE}}
+    assert run_hook(payload) == ""
+
+
+def test_camel_case_write_tool_reminds() -> None:
+    payload = {"session_id": session(), "tool_name": "mcp__notion__createPage", "tool_input": {"body": PROSE}}
+    assert "writing-pipeline" in context_of(run_hook(payload))
+
+
+def test_different_tools_on_one_document_remind_once() -> None:
+    sid = session()
+    first = docs_update(sid, "doc-1", "n1", PROSE)
+    first["tool_name"] = "mcp__claude_ai_Claude_Docs__batch"
+    assert run_hook(first)
+    assert run_hook(docs_update(sid, "doc-1", "n2", PROSE)) == ""
+
+
+def test_each_new_document_without_an_id_reminds() -> None:
+    sid = session()
+    for title in ("Q3 plan", "Hiring update"):
+        payload = {
+            "session_id": sid,
+            "tool_name": "mcp__claude_ai_Claude_Docs__batch",
+            "tool_input": {"container": {"kind": "project", "create": {"name": title, "doc": {"markdown": title + ". " + PROSE}}}},
+        }
+        assert run_hook(payload), title
+
+
+def test_link_urls_in_the_body_are_not_document_ids() -> None:
+    sid = session()
+    for page in ("p1", "p2"):
+        payload = {
+            "session_id": sid,
+            "tool_name": "mcp__notion__update_page",
+            "tool_input": {"page_id": page, "children": [{"text": PROSE, "link": {"url": "https://example.com/spec"}}]},
+        }
+        assert run_hook(payload), page
+
+
+def test_artifact_with_a_large_head_still_reminds(tmp_path: Path) -> None:
+    page = tmp_path / "report.html"
+    css = "/* font */ @font-face { src: url(data:font/woff2;base64," + "A" * 400_000 + "); }"
+    page.write_text(f"<html><head><style>{css}</style></head><body><p>{PROSE}</p></body></html>")
+    payload = {"session_id": session(), "tool_name": "Artifact", "tool_input": {"file_path": str(page)}}
+    assert "writing-pipeline" in context_of(run_hook(payload))
+
+
+def test_script_and_hooks_json_agree_on_write_tools() -> None:
+    """The verb list lives in both places; this keeps them from drifting."""
+    import importlib.util
+    import re
+
+    spec = importlib.util.spec_from_file_location("prose_check", HOOKS / "prose_check.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    config = json.loads((HOOKS / "hooks.json").read_text())
+    matcher = next(e["matcher"] for e in config["hooks"]["PostToolUse"] if "mcp__" in e["matcher"])
+    # Every tool the script treats as a write has to reach it through hooks.json.
+    # The script also drops reads that hooks.json lets through (get_draft).
+    for tool in (
+        "mcp__s__create_page", "mcp__s__update", "mcp__s__batch", "mcp__s__create_draft",
+        "mcp__s__createPage", "mcp__s__updateDoc", "mcp__s__saveNote", "mcp__s__publish_post",
+        "mcp__s__slack_send_message", "mcp__s__reply", "mcp__s__get_draft", "mcp__s__search",
+    ):
+        if module.writes_document(tool):
+            assert re.fullmatch(matcher, tool), tool
+
+
 # --- launcher -----------------------------------------------------------------
 
 

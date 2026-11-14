@@ -22,11 +22,15 @@ The skills are editing tools, not detectors. Humans produce every one of these p
 
 ### The hook
 
-After Claude writes or edits a prose file (`.md`, `.txt`, `.rst`, and similar, over 600 bytes), the hook reminds it to run `writing-pipeline`. It does the same after `gh pr create` with a hand-written body. File reminders fire once per file per session. The hook never blocks a write, and it stays quiet on source code and on instruction files like `CLAUDE.md`.
+After Claude writes or edits a prose file (`.md`, `.txt`, `.rst`, and similar, over 600 bytes), the hook reminds it to run `writing-pipeline`. It does the same after `gh pr create` with a hand-written body, and after a connector or `Artifact` call writes prose to a document, page, or draft (Claude Docs, Notion, Google Docs, an email draft, a published artifact, and so on). It doesn't fire on tools that send a message, since by then it's too late to fix. File and document reminders fire once per file or document per session. The hook never blocks a write, and it stays quiet on source code and on instruction files like `CLAUDE.md`.
 
 The hook is a small Python script that uses only the standard library. It runs with any `python3` (3.8 or later) on your `PATH`, or with [uv](https://docs.astral.sh/uv/) if you have uv and no system Python. With neither, it does nothing: you lose the reminder, and nothing errors. The skills themselves are plain Markdown and need no Python at all.
 
-To turn it off for a session:
+Skills are loaded when a task calls for them, and a long session's context gets compacted. After compaction, Claude can keep following its memory of a skill instead of the current text, which drifts when the skill has been updated. To prevent that, add this line to your `CLAUDE.md`:
+
+> After a context compaction, invoke writing skills again instead of relying on remembered skill text.
+
+To turn the hook off for a session:
 
 ```sh
 export AI_WRITING_PIPELINE_HOOK=0

@@ -1,6 +1,6 @@
 ---
 name: writing-pipeline
-description: "The checking sequence to run after drafting any document. Use this after writing or substantially revising a memo, blog post, PRD, spec, email, Slack message, GitHub issue, report, README, announcement, or any other prose deliverable, and whenever asked to 'check this document', 'run the writing checks', 'is this ready to send', or 'clean this up before I publish'. Orders the length cut, the cold-reader audit, the clarity pass, and the AI-ism pass, says which runs first and why, and defines what counts as done."
+description: "The checking sequence to run after drafting any document. Use this after writing or substantially revising a memo, blog post, PRD, spec, email, Slack message, GitHub issue, report, README, announcement, or any other prose deliverable, wherever it's written (a file, a document or notes tool, a published page, a message draft), and whenever asked to 'check this document', 'run the writing checks', 'is this ready to send', or 'clean this up before I publish'. Orders the length cut, the cold-reader audit, the clarity pass, and the AI-ism pass, says which runs first and why, and defines what counts as done."
 ---
 
 # Writing pipeline
@@ -9,7 +9,7 @@ Drafting is the first half of the job. This is the second half: four checks that
 
 ## When this runs
 
-After any prose deliverable is drafted or substantially revised. Memos, posts, PRDs, specs, emails, Slack messages, issues, reports, READMEs, announcements, release notes, PR descriptions. A short message drafted for someone else counts. It does not run on code, config, commit messages, or your own conversational replies to the user.
+After any prose deliverable is drafted or substantially revised, whether it goes into a file, a document tool, a published page, or a draft message. Memos, posts, PRDs, specs, emails, Slack messages, issues, reports, READMEs, announcements, release notes, PR descriptions. A short message drafted for someone else counts. It does not run on code, config, commit messages, or your own conversational replies to the user.
 
 If you drafted the document in this session, run the pipeline before handing it over. Don't wait to be asked, and don't announce that you're about to run it. Run it, then report what changed.
 
@@ -54,7 +54,7 @@ Compare the length with the count from step 1. If the document has grown by more
 
 ## What done looks like
 
-The document is done when it's no longer than its reader needs, a reader outside the conversation can follow it, no flagged pattern survives that wasn't deliberately kept, and it still reads as one piece of writing rather than a repaired one. Report what you changed and anything you left alone on purpose.
+The document is done when it's no longer than its reader needs, a reader outside the conversation can follow it, no flagged pattern survives that wasn't deliberately kept, and it still reads as one piece of writing rather than a repaired one. Report what you changed and anything you left alone on purpose. Name the checks that ran. A check done from memory, without loading its skill, isn't that check; if that's what happened, say so rather than reporting it as run.
 
 ## Scope limits
 
