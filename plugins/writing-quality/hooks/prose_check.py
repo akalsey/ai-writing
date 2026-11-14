@@ -59,7 +59,8 @@ SKIP_NAMES = {
 MIN_BYTES = 600
 
 CHECKS = (
-    "the cold-reader-docs audit first (so a reader outside this conversation can "
+    "the concise pass first (cut what the reader doesn't need), then the "
+    "cold-reader-docs audit (so a reader outside this conversation can "
     "follow it), then the clear-prose pass (so each sentence says who did what, "
     "in words the reader would use), then the avoid-ai-writing pass (to strip "
     "machine tells), then a full re-read."

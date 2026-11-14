@@ -74,10 +74,10 @@ def bash(command: str, sid: str | None = None) -> dict:
 # --- prose file writes -------------------------------------------------------
 
 
-def test_prose_write_reminds_with_all_three_checks(memo: Path) -> None:
+def test_prose_write_reminds_with_every_check(memo: Path) -> None:
     out = run_hook({"session_id": session(), "tool_name": "Write", "tool_input": {"file_path": str(memo)}})
     text = context_of(out)
-    for skill in ("writing-pipeline", "cold-reader-docs", "clear-prose", "avoid-ai-writing"):
+    for skill in ("writing-pipeline", "concise", "cold-reader-docs", "clear-prose", "avoid-ai-writing"):
         assert skill in text
 
 
@@ -118,6 +118,7 @@ def test_source_file_is_silent(tmp_path: Path) -> None:
 def test_pr_create_with_body_reminds(command: str) -> None:
     text = context_of(run_hook(bash(command)))
     assert "pull request" in text
+    assert "concise" in text
     assert "clear-prose" in text
     assert "gh pr edit" in text
 

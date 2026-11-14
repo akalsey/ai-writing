@@ -20,8 +20,9 @@ plugins/
     output-styles/clear-reports.md  # opt-in; Claude Code only
     skills/avoid-ai-writing/        # SKILL.md + test-corpus.md
     skills/clear-prose/             # SKILL.md + test-corpus.md
+    skills/concise/                 # SKILL.md + test-corpus.md
     skills/cold-reader-docs/
-    skills/writing-pipeline/        # orders the other three
+    skills/writing-pipeline/        # orders the other four
 tests/test_prose_check.py           # hook tests (uv script, pytest)
 build.py                            # validate + package (uv script, PEP 723)
 Makefile                            # on-demand build front end
@@ -140,9 +141,17 @@ Output styles are a Claude Code feature, so this file never goes into a `.skill`
 
 ## How the skills relate
 
-`writing-pipeline` is the entry point: cold-reader audit first, then the `clear-prose` pass, then the AI-ism pass, then a re-read. The order is load-bearing and the skill explains why: the cold-reader and clarity passes both write new sentences, and new sentences carry new machine tells, so running the surface pass earlier means editing text that's about to be replaced.
+`writing-pipeline` is the entry point: the `concise` length cut first, then the cold-reader audit, then the `clear-prose` pass, then the AI-ism pass, then a re-read. The order is load-bearing and the skill explains why: the cut removes text nothing else should spend effort on, the cold-reader and clarity passes both write new sentences, and new sentences carry new machine tells, so running the surface pass earlier means editing text that's about to be replaced.
+
+`concise` exists because the cold-reader and clarity passes only add. In testing, the pipeline without it grew a Slack reply to "is there an ETA?" from 141 words to 203. The word count after the cut is a budget the re-read step checks against. If you change either expanding pass, re-run a context-heavy drafting task (a short reply written after a long working session) and confirm the final isn't longer than the cut version. `concise` cuts content, never grammar: compressing survivors into fragments is a machine tell that `avoid-ai-writing` flags, so the two must not fight.
 
 `clear-prose` and `cold-reader-docs` share a boundary. Labels the writer coined while doing the work ("the clone," "the knobs") belong to `cold-reader-docs`; `clear-prose` handles names that are wrong for the reader even when nothing was coined (inflated category nouns, invented compounds, verbs with a budget). `clear-prose` defers to the cold-reader pass for coinages, so keep that pointer if either file moves.
+
+## Testing changes to `concise`
+
+`plugins/writing-quality/skills/concise/test-corpus.md`: Part 1 should come back substantially shorter without losing an action, date, owner, or decision. Part 2 should come back essentially unchanged. Part 2's traps are the over-cut failures: compressing an already-short reply, stripping necessary detail from an incident write-up, dropping verification a reviewer needs, removing a needed definition, and treating one courtesy as padding.
+
+The skill's job only shows up when the writer knows more than the reader needs, so the corpus alone isn't enough. Editing someone else's bloated draft passed even before this skill existed. Also test drafting after a long working session, where the failure actually happens.
 
 ## Testing changes to `clear-prose`
 

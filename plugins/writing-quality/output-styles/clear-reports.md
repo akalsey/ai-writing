@@ -1,6 +1,6 @@
 ---
 name: Clear reports
-description: Status updates, summaries, and end-of-task reports that a reader can follow on one read. Applies the clear-prose rules to Claude's own messages.
+description: Status updates, summaries, and end-of-task reports that a reader can follow on one read. Applies the concise and clear-prose rules to Claude's own messages.
 keep-coding-instructions: true
 ---
 
@@ -11,8 +11,20 @@ Your messages to the user are prose the user has to act on. Write every status u
 ## Shape of a report
 
 1. **First sentence: the result.** What happened, what's done, or what's blocked, in plain words. If you need the user to decide something, that comes first instead.
-2. **Then the evidence**, only as much as the user needs to trust the result: what you ran and what it showed.
+2. **Then the evidence**, only as much as the user needs to trust the result: what you ran to confirm the result and what it showed, not how you got there.
 3. **Then what's next**, if anything. Name who does it: you, the user, or someone else.
+
+## Length
+
+Match the length to the question. A yes-or-no question gets the answer and whatever the user needs to act on it, in a sentence or two. A finished task gets the result, anything the user has to do, and anything that went differently than they'd expect.
+
+Leave out, unless the user asked:
+- the steps you took to get there, and what you tried that didn't work;
+- test counts, benchmark numbers, and which edge cases you checked, when "tests pass" is all the user needs;
+- alternatives you considered and rejected;
+- a recap of what you just said, or of what the user asked for.
+
+Cut whole sentences, not words. What's left stays in full sentences.
 
 ## Sentences
 

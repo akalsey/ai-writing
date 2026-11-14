@@ -6,16 +6,17 @@ The marketplace ships one plugin today, `writing-quality`. Its skills also work 
 
 ## What's in `writing-quality`
 
-Four skills, a hook, and an output style.
+Five skills, a hook, and an output style.
 
 | Skill | What it does |
 |---|---|
-| `writing-pipeline` | The entry point. Runs the three checks below in order, then a full re-read, and defines when a document is done. |
+| `writing-pipeline` | The entry point. Runs the four checks below in order, then a full re-read, and defines when a document is done. |
+| `concise` | Cuts a draft to what its reader needs. Puts the answer first, then removes whole sentences and sections the reader wouldn't miss: restated requests, background they already have, the writer's process, rejected alternatives, recaps. It cuts content, never grammar, and never drops an action, date, owner, or decision. |
 | `cold-reader-docs` | Makes a document stand on its own for someone who wasn't in the conversation that produced it. Catches terms used before they're defined, pointers like "the approach we discussed," and shorthand the writer coined while working. |
 | `clear-prose` | Sentence-level clarity. Checks that the actor is the subject and the action is the verb, that things are called what the reader would call them, and that each paragraph leads with its point. |
 | `avoid-ai-writing` | Finds and removes AI writing patterns: tiered vocabulary, formatting habits, and the structural tics that survive a vocabulary cleanup. Has `detect`, `rewrite`, and `edit` modes, context profiles (blog, docs, internal memo, LinkedIn, and others), and optional voice profiles. |
 
-The order matters. The cold-reader and clarity passes both write new sentences, and new sentences can bring new AI patterns, so the `avoid-ai-writing` pass runs last, on the text that will actually ship.
+The order matters. `concise` runs first so nothing later polishes a sentence that's about to be cut, and its result sets the length budget: the cold-reader and clarity passes add words when they define terms and unpack phrases, and without a budget they'll turn a short reply into a long one. Those two passes write new sentences, and new sentences can bring new AI patterns, so the `avoid-ai-writing` pass runs last, on the text that will actually ship.
 
 The skills are editing tools, not detectors. Humans produce every one of these patterns too, especially under deadline or in a second language. Treat a flag as a reason to look at a sentence, not as proof of who wrote it.
 
@@ -33,7 +34,7 @@ export AI_WRITING_PIPELINE_HOOK=0
 
 ### The output style
 
-`Clear reports` applies the `clear-prose` rules to Claude's own status updates and end-of-task summaries, which the skills and the hook can't reach. It's opt-in: choose it from `/output-style` or `/config`. It keeps Claude Code's normal coding instructions and adds the reporting rules on top.
+`Clear reports` applies the `concise` and `clear-prose` rules to Claude's own status updates and end-of-task summaries, which the skills and the hook can't reach. It's opt-in: choose it from `/output-style` or `/config`. It keeps Claude Code's normal coding instructions and adds the reporting rules on top.
 
 ## Install
 
@@ -74,7 +75,7 @@ make list         # list each skill with its plugin
 
 Builds are deterministic: an unchanged skill rebuilds byte-for-byte identical. Set `SOURCE_DATE_EPOCH` to control the timestamp.
 
-The skills themselves are tested against calibration corpora. `avoid-ai-writing` and `clear-prose` each ship a `test-corpus.md`. Part 1 holds passages that should be flagged, with a table of the expected flags. Part 2 holds human-sounding prose that sits close to the rules without breaking them, and nothing in Part 2 should be flagged. Run the skill against both parts after changing any rule. A rule that fires on Part 2 needs narrowing, even if it catches real cases in Part 1.
+The skills themselves are tested against calibration corpora. `avoid-ai-writing`, `clear-prose`, and `concise` each ship a `test-corpus.md`. Part 1 holds passages that should be flagged or cut, with a table of the expected results. Part 2 holds text that sits close to the rules without breaking them, and nothing in Part 2 should be flagged or cut. Run the skill against both parts after changing any rule. A rule that fires on Part 2 needs narrowing, even if it catches real cases in Part 1.
 
 ## Contributing
 
