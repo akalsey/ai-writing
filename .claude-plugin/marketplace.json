@@ -1,0 +1,32 @@
+{
+  "name": "ai-writing",
+  "owner": {
+    "name": "Adam Kalsey",
+    "email": "adam@kalsey.com"
+  },
+  "metadata": {
+    "description": "Tools for improving AI writing: making it better, and telling when it isn't.",
+    "version": "0.2.0"
+  },
+  "plugins": [
+    {
+      "name": "writing-quality",
+      "source": "./plugins/writing-quality",
+      "description": "The checks to run on every document: make sure a reader who wasn't in the conversation can follow it, that each sentence says who did what in words the reader would use, and that the prose carries no machine tells. Includes a hook that reminds Claude to run them after writing prose or opening a pull request, and an opt-in output style that applies the clarity rules to Claude's own status reports.",
+      "version": "0.2.1",
+      "author": {
+        "name": "Adam Kalsey",
+        "email": "adam@kalsey.com"
+      },
+      "homepage": "https://github.com/akalsey/ai-writing",
+      "license": "MIT",
+      "keywords": [
+        "writing",
+        "editing",
+        "prose",
+        "ai-detection",
+        "documentation"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+---
+name: writing-pipeline
+description: "The checking sequence to run after drafting any document. Use this after writing or substantially revising a memo, blog post, PRD, spec, email, report, README, announcement, or any other prose deliverable, and whenever asked to 'check this document', 'run the writing checks', 'is this ready to send', or 'clean this up before I publish'. Orders the cold-reader audit, the clarity pass, and the AI-ism pass, says which runs first and why, and defines what counts as done."
+---
+
+# Writing pipeline
+
+Drafting is the first half of the job. This is the second half: three checks that run on every document before it goes anywhere, in a fixed order, with a re-read at the end.
+
+## When this runs
+
+After any prose deliverable is drafted or substantially revised. Memos, posts, PRDs, specs, emails, reports, READMEs, announcements, release notes, PR descriptions. It does not run on code, config, commit messages, or short chat replies.
+
+If you drafted the document in this session, run the pipeline before handing it over. Don't wait to be asked, and don't announce that you're about to run it. Run it, then report what changed.
+
+## The order
+
+Run `cold-reader-docs` first, then `clear-prose`, then `avoid-ai-writing`. The order matters and isn't arbitrary.
+
+The cold-reader audit changes *what the document says*. It adds definitions the draft assumed, resolves pointers that reached back into the conversation, and cuts analogies that were thinking tools rather than content. The clarity pass changes *how each sentence is built*. It moves actors into subjects and actions into verbs, replaces invented names with the ones a reader would use, and puts the point before its evidence. Both passes write new sentences, and new sentences carry new machine tells.
+
+The AI-ism pass changes *how the document sounds*. Running it earlier means editing prose that the other two passes are about to rewrite, and the tells reappear in the replacement text. So: content first, sentence structure second, surface last.
+
+### Step 1 — cold-reader audit
+
+Apply `cold-reader-docs`. Re-read the whole document as someone with no knowledge of the conversation that produced it and only general awareness of the topic. Fix every term used before it's introduced, every pointer that resolves outside the document, every conclusion presented as "what we discussed."
+
+### Step 2 — clarity pass
+
+Apply `clear-prose`. For each sentence, check that the actor is the subject and the action is the verb, that each thing is called what the reader would call it, and that each paragraph leads with its point. Most sentences pass. Rewrite only the ones that don't.
+
+### Step 3 — AI-ism pass
+
+Apply `avoid-ai-writing` to the result. Let it pick the context profile from the document, or set one if you know the audience. A memo and a blog post get different cadence rules, and using the wrong profile makes the writing worse rather than better.
+
+Take the substantive catches. Keep the things that section names as genuine voice.
+
+Two of its rules would undo the clarity pass, so they don't apply to what step 2 produced:
+
+- **Point-first openings stay.** The paragraph-shape rule flags documents where most paragraphs state their thesis in the first few words. When step 2 moved a result or decision to the front of its paragraph, leave it there. Apply the shape rule to the closing sentences only.
+- **`[author: …]` questions stay.** The unfilled-placeholder rule says to fill or delete bracketed slots. The questions the clarity and cold-reader passes leave are not template residue; they're facts only the author has. Don't fill them in or delete them. List them for the author in your report.
+
+### Step 4 — read it again
+
+Read the finished document start to finish, in order, as prose rather than as a checklist target. This catches the failure the first three steps create: an edit that fixed a flagged span and broke the paragraph around it, a definition inserted where it interrupts the argument, a transition that stopped connecting once the sentence before it changed.
+
+## What done looks like
+
+The document is done when a reader outside the conversation can follow it, no flagged pattern survives that wasn't deliberately kept, and it still reads as one piece of writing rather than a repaired one. Report what you changed and anything you left alone on purpose.
+
+## Scope limits
+
+All three checks are editing tools, not rewriting mandates. If the draft is already strong, the right output is a short note saying so and a handful of cuts.
+
+None of them should broaden the argument. They fix what the document says and how it reads, not what it claims. If a check surfaces a gap in the reasoning, say so rather than filling it — that's a decision for whoever owns the document.
+
+Quoted material, code blocks, and text attributed to someone else are out of scope for every pass. Flag problems there instead of editing them.

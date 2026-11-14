@@ -1,0 +1,105 @@
+name: release
+
+# Tag a version to publish .skill bundles:
+#
+#   ./build.py version --expect 0.2.0   # confirm manifests agree first
+#   git tag v0.2.0 && git push origin v0.2.0
+#
+# The bundles are for claude.ai skill uploads and the Skills API. Claude Code
+# users don't need them: /plugin install reads plugins/ from the repo directly,
+# so a release is a convenience artifact, never a prerequisite.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build a release from (e.g. v0.2.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+
+      - name: Resolve version
+        id: v
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "tag=$tag"              >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}"      >> "$GITHUB_OUTPUT"
+
+      - name: Validate skills and marketplace
+        run: make validate
+
+      - name: Check the tag matches the manifests
+        # Without this, tagging v0.2.0 against manifests still saying 0.1.0
+        # ships bundles whose declared version contradicts the release name.
+        run: ./build.py version --expect "${{ steps.v.outputs.version }}"
+
+      - name: Build bundles reproducibly
+        # Pin the archive timestamps to the tagged commit so anyone can rebuild
+        # the exact bytes this release ships.
+        run: |
+          SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          export SOURCE_DATE_EPOCH
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
+          make clean
+          make
+
+      - name: Generate checksums
+        working-directory: dist
+        run: sha256sum *.skill > SHA256SUMS
+
+      - name: Write release notes
+        run: |
+          {
+            echo "Agent Skills bundles built from \`${{ steps.v.outputs.tag }}\`."
+            echo
+            echo "Upload a \`.skill\` file at **claude.ai → Settings → Capabilities → Skills**,"
+            echo "or pass it to the Skills API."
+            echo
+            echo "Claude Code users don't need these files:"
+            echo
+            echo '```'
+            echo "/plugin marketplace add ${{ github.repository }}"
+            echo "/plugin install writing-quality@ai-writing"
+            echo '```'
+            echo
+            echo "### Bundles"
+            echo
+            echo "| Skill | Plugin | SHA-256 |"
+            echo "|---|---|---|"
+            # Parses `build.py list`, whose first two whitespace-separated
+            # columns are plugin then skill. That output is formatted for
+            # humans; changing its columns silently empties this table.
+            ./build.py list | while read -r plugin skill _; do
+              sum=$(awk -v f="$skill.skill" '$2 == f {print $1}' dist/SHA256SUMS)
+              echo "| \`$skill\` | \`$plugin\` | \`${sum:0:16}…\` |"
+            done
+            echo
+            echo "Builds are reproducible: \`SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) make clean && make\`"
+          } > notes.md
+          cat notes.md
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.v.outputs.tag }}" \
+            --title "${{ steps.v.outputs.tag }}" \
+            --notes-file notes.md \
+            dist/*.skill dist/SHA256SUMS

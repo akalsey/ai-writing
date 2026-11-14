@@ -1,0 +1,6 @@
+# Built .skill bundles — rebuild with `make`
+dist/
+
+.DS_Store
+__pycache__/
+*.pyc

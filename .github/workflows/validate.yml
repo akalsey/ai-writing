@@ -1,0 +1,52 @@
+name: validate
+
+# Catches frontmatter and marketplace breakage before it reaches anyone's
+# /plugin install. Runs on every push and PR; the release workflow reruns the
+# same checks so a tag can never ship something this job would have failed.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+
+      - name: Validate skills and marketplace
+        run: make validate
+
+      - name: Test the hook
+        run: make test
+
+      - name: Build all bundles
+        run: make
+
+      - name: Verify builds are reproducible
+        # The bundles pin their zip timestamps, so building twice from an
+        # unchanged tree must produce identical bytes. A drift here means
+        # something nondeterministic crept into packaging.
+        run: |
+          sha256sum dist/*.skill > /tmp/first.sha256
+          make clean
+          make
+          sha256sum dist/*.skill > /tmp/second.sha256
+          diff /tmp/first.sha256 /tmp/second.sha256
+
+      - name: Show bundle contents
+        run: |
+          for f in dist/*.skill; do
+            echo "== $f"
+            unzip -l "$f"
+          done
