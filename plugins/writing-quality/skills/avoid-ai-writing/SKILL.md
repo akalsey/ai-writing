@@ -524,6 +524,10 @@ Document-scale version: count every pre-announced grouping of the same cardinali
 
 **Sharpening verbs for conclusions.** "The earlier conclusion holds but sharpens." "That framing matters because…" "This is the test that prevents X." Announces that a conclusion has become more precise instead of showing the precision. Fix: state the sharpened conclusion and delete the announcement.
 
+**"Costs" as a verdict.** "Option B costs more in risk than code." "That costs you trust, not time." "All it costs is a quick conversation to find out." Stretches the transactional verb "costs" across units that were never actually measured against each other — risk against code, trust against time — so an unweighed comparison sounds like it came off a scale. The minimizing form ("all it costs is...") runs the same trick backward: it declares an action costless by definition, foreclosing the question instead of answering it. Distinct from a literal cost statement ("cost is the reason," "that costs $50") — the tell is comparing or waiving incommensurable abstractions, not using the word. Fix: name what's actually at stake and who pays it, or drop the metaphor and state the recommendation directly.
+> Before: "Option B costs more in risk than code."
+> After: "Option B touches the auth path in three services most of the team hasn't worked in; it needs a second reviewer before it ships."
+
 **Wholeness verdicts.** "That's the whole point." "Consistency is the entire game." "The entire pitch is one sentence long." "Here's the whole secret." A claim that some single thing accounts for everything, asserted rather than shown, and usually attached to whichever detail the paragraph just finished describing. Four surface forms — *that's the whole X*, *X is the whole Y*, *X is the entire Y*, *the entire X is Y* — and they're interchangeable, so catching one phrasing and leaving the others fixes nothing. Same family as named-abstraction authority: the frame does the persuading. Fix: delete the frame and let the observation stand, or state what the other parts are and why they don't matter.
 
 **"That's not nothing."** Also "this is not nothing," "which is not nothing." Litotes as a verdict, used to salvage a finding the writer suspects is thin. If the finding is worth reporting, report its size. If it isn't, cut it.
@@ -618,7 +622,7 @@ Not all AI-isms are equal. When doing a quick pass or triaging a large document,
 - Real/actual adjective inflation ("real on-chain tokenomics")
 - Bullet lists of bare noun phrases (5+ short adj+noun items, no verbs)
 - Tier 3 phrase clustering (≥3 distinct boilerplate phrases in one piece)
-- Assistant rhetorical tics, Cut band — named-abstraction authority, superlative anointing, not-just escalation, parallel quoted questions, parallel definitional series, two-branch conditional mirror, inline count announcement, validating openers, bold lead-in bullets, bold lead-in paragraphs, persona vignettes at fixed cadence, forced symmetry sections, slow-failure adverbs, "Worth X." fragments, sharpening verbs
+- Assistant rhetorical tics, Cut band — named-abstraction authority, superlative anointing, not-just escalation, parallel quoted questions, parallel definitional series, two-branch conditional mirror, inline count announcement, validating openers, bold lead-in bullets, bold lead-in paragraphs, persona vignettes at fixed cadence, forced symmetry sections, slow-failure adverbs, "Worth X." fragments, sharpening verbs, "costs" as a verdict
 - Reframe density above one per 400 words (structural signal — see the detection heuristic)
 - Verdict closers on more than 30% of sections
 - Paragraph-shape uniformity (the last-sentence test)

@@ -36,6 +36,8 @@ The self-reference escape hatch in SKILL.md does **not** apply here. Part 1 is u
 
 **15.** This is the only estimate I trust, and you don't have to take my word for it.
 
+**16.** Option B costs more in risk than code. All it costs is a quick conversation with the on-call lead to find out which one is true.
+
 ### Expected flags
 
 | Passage | Pattern | Section |
@@ -55,6 +57,7 @@ The self-reference escape hatch in SKILL.md does **not** apply here. Part 1 is u
 | 13 | Colon into a triple; inline count announcement | Sentence structure / Cut |
 | 14 | Performative honesty (×3) | Sentence structure |
 | 15 | Superlative anointing, narrowing variant; "don't take my word for it" | Cut |
+| 16 | "Costs" as a verdict (×2) | Cut |
 
 Passage 3 is also the dedup test. Three rules cover overlapping spans in twelve words. Per the detection heuristic, the density count takes the longest-covering span and drops the rest — reporting three separate hits there is a bug in how the counts are being run, not three findings.
 
@@ -83,7 +86,7 @@ The interesting failure was in retries. A client that timed out at 30 seconds ag
 - Colons that open onto clauses, not a bare list: conditions stated as full clauses (paragraph 2) and a clause containing the list (paragraph 8). These pass in every profile, including `internal-memo`, which is what auto-detect picks for this file.
 - Correct em dash use (paragraph 4).
 - Within-sentence anaphora, protected by the Keep band (paragraph 6).
-- Deliberate word repetition — "Cost is the reason. Cost is also the reason" (paragraph 4).
+- Deliberate word repetition — "Cost is the reason. Cost is also the reason" (paragraph 4). Literal, not comparative, so it doesn't trip "costs" as a verdict either.
 - Flat operational sequencing (paragraph 7).
 - A long teaching paragraph that develops one idea (paragraph 8).
 - "The interesting failure was in retries" — reads like emotional flatline, but the sentence names the subject rather than pre-announcing significance, and specifics follow immediately.
